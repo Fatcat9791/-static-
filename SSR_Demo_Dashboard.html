@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SSR · 智能设施管理平台</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
+  background: #F2EEEA;
+  color: #2B2832;
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ===== SIDEBAR ===== */
+.sidebar {
+  width: 280px;
+  min-width: 280px;
+  background: #2B2832;
+  color: #F2EEEA;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+}
+.sidebar-logo {
+  padding: 28px 24px 20px;
+  font-size: 20px;
+  font-weight: 700;
+  color: #D8AC55;
+  letter-spacing: 3px;
+  border-bottom: 1px solid #3A3744;
+}
+.sidebar-logo span {
+  font-size: 11px;
+  font-weight: 400;
+  color: #8A8595;
+  display: block;
+  margin-top: 4px;
+  letter-spacing: 1px;
+}
+.sidebar-nav {
+  flex: 1;
+  padding: 16px 0;
+}
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 24px;
+  font-size: 14px;
+  color: #A8A4B0;
+  cursor: pointer;
+  transition: all 0.15s;
+  border-left: 3px solid transparent;
+}
+.sidebar-item:hover {
+  color: #F2EEEA;
+  background: #3A3744;
+}
+.sidebar-item.active {
+  color: #F2EEEA;
+  background: #3A3744;
+  border-left-color: #D8AC55;
+  font-weight: 600;
+}
+.sidebar-item .icon { font-size: 16px; width: 24px; text-align: center; }
+.sidebar-footer {
+  padding: 16px 24px;
+  border-top: 1px solid #3A3744;
+  font-size: 11px;
+  color: #6A6577;
+}
+.sidebar-footer .store { color: #D8AC55; font-weight: 600; }
+
+/* ===== MAIN ===== */
+.main {
+  flex: 1;
+  padding: 0;
+  min-width: 0;
+}
+
+/* ===== TOP BAR ===== */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 32px;
+  background: #fff;
+  border-bottom: 1px solid #E4E0DB;
+}
+.topbar-left { display: flex; align-items: center; gap: 12px; }
+.topbar-title { font-size: 18px; font-weight: 600; color: #2B2832; }
+.topbar-badge {
+  background: #2B2832; color: #F2EEEA;
+  font-size: 10px; padding: 3px 10px; border-radius: 4px;
+  letter-spacing: 1px;
+}
+.topbar-right {
+  display: flex; align-items: center; gap: 16px;
+  font-size: 13px; color: #8A8595;
+}
+.topbar-right .clock { color: #2B2832; font-weight: 600; }
+
+/* ===== TABS ===== */
+.tab-bar {
+  display: flex;
+  background: #fff;
+  border-bottom: 1px solid #E4E0DB;
+  padding: 0 32px;
+  gap: 0;
+}
+.tab-btn {
+  padding: 12px 20px;
+  font-size: 13px;
+  color: #8A8595;
+  cursor: pointer;
+  border: none;
+  background: none;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+.tab-btn:hover { color: #2B2832; }
+.tab-btn.active {
+  color: #2B2832;
+  border-bottom-color: #D8AC55;
+  font-weight: 600;
+}
+.tab-btn .badge {
+  background: #2B2832; color: #F2EEEA;
+  font-size: 10px; padding: 1px 7px; border-radius: 3px;
+  margin-left: 4px;
+}
+
+/* ===== PAGES ===== */
+.page { display: none; padding: 24px 32px 40px; max-width: 1200px; }
+.page.active { display: block; }
+
+/* ===== COMPONENTS ===== */
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #2B2832;
+  margin-bottom: 18px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #E4E0DB;
+}
+
+/* KPI Row */
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 18px;
+}
+.kpi-card {
+  background: #fff;
+  border-radius: 6px;
+  padding: 18px 20px;
+  border: 1px solid #E4E0DB;
+  transition: box-shadow 0.15s;
+}
+.kpi-card:hover { box-shadow: 0 2px 8px rgba(43,40,50,0.06); }
+.kpi-card .num {
+  font-size: 26px;
+  font-weight: 700;
+  color: #2B2832;
+}
+.kpi-card .num.gold { color: #D8AC55; }
+.kpi-card .label {
+  font-size: 12px;
+  color: #8A8595;
+  margin-top: 2px;
+}
+.kpi-card .sub {
+  font-size: 11px;
+  color: #6A9B6A;
+  margin-top: 4px;
+}
+.kpi-card .sub.warn { color: #B8860B; }
+
+/* Cards */
+.card {
+  background: #fff;
+  border-radius: 6px;
+  border: 1px solid #E4E0DB;
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+.card-header {
+  padding: 14px 20px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #F0ECE8;
+}
+.card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #2B2832;
+}
+.card-body { padding: 16px 20px 18px; }
+.card-badge {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-weight: 500;
+}
+.card-badge.online { background: #6A9B6A15; color: #6A9B6A; }
+.card-badge.warn { background: #B8860B15; color: #B8860B; }
+
+/* Chart bars */
+.chart-row { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+.chart-row .label { width: 100px; font-size: 12px; color: #8A8595; flex-shrink: 0; }
+.chart-row .bar-wrap { flex: 1; height: 18px; background: #F0ECE8; border-radius: 3px; overflow: hidden; }
+.chart-row .bar-fill { height: 100%; border-radius: 3px; }
+.chart-row .bar-val { width: 70px; text-align: right; font-size: 12px; color: #2B2832; flex-shrink: 0; }
+
+/* EQ list */
+.eq-list { display: flex; flex-direction: column; gap: 5px; }
+.eq-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 12px; background: #F8F6F4; border-radius: 4px;
+}
+.eq-name { flex: 1; font-size: 13px; }
+.eq-status { font-size: 11px; padding: 2px 8px; border-radius: 3px; }
+.eq-status.running { background: #6A9B6A15; color: #6A9B6A; }
+.eq-status.standby { background: #B8860B15; color: #B8860B; }
+.eq-mode { font-size: 11px; color: #8A8595; }
+.eq-temp { font-size: 13px; color: #D8AC55; font-weight: 600; }
+
+/* IAQ */
+.iaq-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.iaq-chip {
+  flex: 1; min-width: 80px;
+  background: #F8F6F4; border-radius: 4px; padding: 10px; text-align: center;
+}
+.iaq-chip .val { font-size: 18px; font-weight: 700; color: #2B2832; }
+.iaq-chip .vlabel { font-size: 11px; color: #8A8595; margin-top: 3px; }
+.iaq-chip.good { border-left: 3px solid #6A9B6A; }
+
+/* 3D Placeholder */
+.placeholder3d {
+  width: 100%; height: 220px;
+  background: #F8F6F4; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px dashed #D4CFC8;
+  font-size: 13px; color: #8A8595; text-align: center; line-height: 1.6;
+  flex-direction: column; gap: 8px;
+}
+.placeholder3d .icon { font-size: 36px; }
+
+/* Work Orders */
+.wo-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 0; border-bottom: 1px solid #F0ECE8;
+}
+.wo-item:last-child { border-bottom: none; }
+.wo-id { font-size: 11px; color: #8A8595; width: 65px; }
+.wo-title { flex: 1; font-size: 13px; }
+.wo-title .tag {
+  font-size: 10px; padding: 1px 6px; border-radius: 3px; margin-left: 6px;
+}
+.wo-title .tag.urgent { background: #D3540015; color: #D35400; }
+.wo-title .tag.normal { background: #2B283215; color: #2B2832; }
+.wo-label { font-size: 11px; padding: 2px 8px; border-radius: 3px; }
+.wo-label.done { background: #6A9B6A15; color: #6A9B6A; }
+.wo-label.progress { background: #2B283215; color: #2B2832; }
+.wo-label.pending { background: #B8860B15; color: #B8860B; }
+.wo-date { font-size: 11px; color: #8A8595; }
+
+/* Flow */
+.flow-row { display: flex; align-items: center; gap: 6px; margin: 14px 0; flex-wrap: wrap; }
+.flow-step {
+  background: #F8F6F4; border: 1px solid #E4E0DB; border-radius: 4px;
+  padding: 8px 12px; text-align: center; flex: 1; min-width: 70px;
+}
+.flow-step .num { font-size: 11px; color: #D8AC55; font-weight: 600; }
+.flow-step .label { font-size: 11px; color: #8A8595; margin-top: 2px; }
+.flow-arrow { color: #D4CFC8; font-size: 14px; flex-shrink: 0; }
+
+/* Grid */
+.col2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.col3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+@media (max-width: 900px) { .col2 { grid-template-columns: 1fr; } }
+@media (max-width: 700px) { .kpi-row { grid-template-columns: repeat(2, 1fr); } }
+
+/* Info box */
+.info-box {
+  background: #F8F6F4; border: 1px solid #E4E0DB; border-radius: 4px;
+  padding: 12px 14px; margin-bottom: 8px;
+}
+.info-box:last-child { margin-bottom: 0; }
+.info-box .title { font-size: 12px; color: #2B2832; font-weight: 600; margin-bottom: 4px; }
+.info-box .desc { font-size: 12px; color: #6A6577; line-height: 1.6; }
+
+/* CV upload */
+.cv-upload {
+  background: #F8F6F4; border: 2px dashed #D4CFC8; border-radius: 6px;
+  padding: 18px; text-align: center; margin-bottom: 10px;
+}
+.cv-upload .icon { font-size: 28px; margin-bottom: 6px; }
+.cv-upload .text { font-size: 12px; color: #8A8595; }
+.cv-upload .result {
+  margin-top: 8px; padding: 8px 14px; background: #fff; border: 1px solid #E4E0DB; border-radius: 4px;
+  display: inline-block;
+}
+.cv-upload .result .label { color: #6A9B6A; font-weight: 600; font-size: 13px; }
+.cv-upload .result .detail { color: #6A6577; font-size: 11px; }
+
+/* Photo compare */
+.photo-compare { display: flex; gap: 12px; margin: 8px 0; }
+.photo-box {
+  flex: 1; background: #F8F6F4; border-radius: 4px; padding: 10px; text-align: center;
+}
+.photo-box .ph-icon { font-size: 36px; margin-bottom: 4px; }
+.photo-box .ph-label { font-size: 11px; color: #8A8595; }
+.photo-box .ph-result { font-size: 11px; margin-top: 4px; }
+.photo-box .ph-result.pass { color: #6A9B6A; }
+.photo-box .ph-result.fail { color: #D35400; }
+
+/* Policy Bot */
+.policy-bot {
+  background: #fff; border: 1px solid #D8AC5544; border-radius: 6px;
+  padding: 16px 20px; margin-bottom: 12px;
+}
+.policy-bot .header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.policy-bot .header .icon { font-size: 18px; }
+.policy-bot .header .title { font-size: 13px; color: #2B2832; font-weight: 600; }
+.policy-bot .search {
+  background: #F8F6F4; border: 1px solid #E4E0DB; border-radius: 4px;
+  padding: 8px 12px; color: #8A8595; font-size: 12px;
+  display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+}
+.policy-bot .qa { margin-bottom: 6px; }
+.policy-bot .qa .q { font-size: 12px; color: #2B2832; }
+.policy-bot .qa .a {
+  font-size: 11px; color: #6A9B6A; margin-top: 2px;
+  padding-left: 12px; border-left: 2px solid #6A9B6A33;
+}
+
+/* Alert bar */
+.alert-bar {
+  background: #FDF6F0; border-left: 3px solid #D35400;
+  padding: 10px 16px; border-radius: 0 4px 4px 0;
+  margin-bottom: 14px; font-size: 13px;
+}
+.alert-bar .time { color: #8A8595; font-size: 11px; }
+.alert-bar .msg { color: #2B2832; margin-top: 2px; }
+.alert-bar .action { color: #D8AC55; font-size: 11px; margin-top: 4px; font-weight: 600; }
+
+/* Badges */
+.badge-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.badge-item {
+  background: #F8F6F4; border: 1px solid #E4E0DB; border-radius: 4px;
+  padding: 6px 12px; font-size: 11px; color: #6A6577;
+}
+
+/* KPI badge (inline card) */
+.kpi-badge {
+  flex: 1; min-width: 100px;
+  background: #fff; border-radius: 4px; padding: 12px 14px;
+  border: 1px solid #E4E0DB;
+}
+.kpi-badge .num { font-size: 20px; font-weight: 700; color: #2B2832; }
+.kpi-badge .num.gold { color: #D8AC55; }
+.kpi-badge .label { font-size: 11px; color: #8A8595; margin-top: 2px; }
+
+/* AI log */
+.ai-log {
+  margin-top: 10px; padding: 10px 14px; background: #F8F6F4; border-radius: 4px;
+}
+.ai-log .title { font-size: 11px; color: #D8AC55; font-weight: 600; margin-bottom: 4px; }
+.ai-log .text { font-size: 11px; color: #6A6577; line-height: 1.7; }
+
+/* Footer */
+.footer { text-align: center; padding: 20px; font-size: 11px; color: #B3A7B8; border-top: 1px solid #E4E0DB; }
+</style>
+</head>
+<body>
+
+<!-- ===== SIDEBAR ===== -->
+<div class="sidebar">
+  <div class="sidebar-logo">
+    SSR
+    <span>INTEGRATED FACILITY MANAGEMENT</span>
+  </div>
+  <div class="sidebar-nav">
+    <div class="sidebar-item active" onclick="switchTab(0)">
+      <span class="icon">📊</span> 总览 Dashboard
+    </div>
+    <div class="sidebar-item" onclick="switchTab(1)">
+      <span class="icon">⚡</span> 能源监控
+    </div>
+    <div class="sidebar-item" onclick="switchTab(2)">
+      <span class="icon">❄️</span> HVAC · 数字资产
+    </div>
+    <div class="sidebar-item" onclick="switchTab(3)">
+      <span class="icon">🏗️</span> 3D数字孪生
+    </div>
+    <div class="sidebar-item" onclick="switchTab(4)">
+      <span class="icon">📋</span> 工单闭环
+    </div>
+  </div>
+  <div class="sidebar-footer">
+    <div class="store">Demo Store</div>
+    <div style="margin-top:4px;">广州K11 · 在线</div>
+  </div>
+</div>
+
+<!-- ===== MAIN ===== -->
+<div class="main">
+
+  <!-- Top Bar -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="topbar-title">智能设施管理平台</span>
+      <span class="topbar-badge">HKGIA DEMO</span>
+    </div>
+    <div class="topbar-right">
+      <span>广州K11 | Demo Store</span>
+      <span class="clock" id="clock">--:-- HKT</span>
+    </div>
+  </div>
+
+  <!-- Tab Bar -->
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab(0)">📊 总览</button>
+    <button class="tab-btn" onclick="switchTab(1)">⚡ 能源监控 <span class="badge">核心</span></button>
+    <button class="tab-btn" onclick="switchTab(2)">❄️ HVAC · 数字资产</button>
+    <button class="tab-btn" onclick="switchTab(3)">🏗️ 3D数字孪生</button>
+    <button class="tab-btn" onclick="switchTab(4)">📋 工单闭环 <span class="badge">核心</span></button>
+  </div>
+
+  <!-- ============ PAGE 1: DASHBOARD ============ -->
+  <div class="page active" id="page-0">
+    <div class="section-title">📊 总览</div>
+
+    <div class="kpi-row">
+      <div class="kpi-card"><div class="num">18.6%</div><div class="label">电力消耗降低</div></div>
+      <div class="kpi-card"><div class="num">24.3%</div><div class="label">紧急维修率↓</div></div>
+      <div class="kpi-card"><div class="num gold">HK$180K</div><div class="label">初期投入</div><div class="sub">1.26年回本</div></div>
+      <div class="kpi-card"><div class="num">80%</div><div class="label">巡检差旅碳排↓</div></div>
+    </div>
+
+    <div class="col2">
+      <div class="card">
+        <div class="card-header"><span class="card-title">🔴 当前状态</span><span class="card-badge online">● 在线</span></div>
+        <div class="card-body">
+          <div class="kpi-row" style="grid-template-columns:repeat(4,1fr);margin-bottom:0;">
+            <div class="kpi-badge"><div class="num">38.2 kW</div><div class="label">当前功率</div></div>
+            <div class="kpi-badge"><div class="num">6</div><div class="label">在线设备</div></div>
+            <div class="kpi-badge"><div class="num">3</div><div class="label">今日告警</div><div class="sub warn" style="font-size:10px;margin-top:2px;">已处理 2</div></div>
+            <div class="kpi-badge"><div class="num">23</div><div class="label">今日AI调参</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">⚙️ 主动管控</span><span class="card-badge online">● 已启用</span></div>
+        <div class="card-body">
+          <div class="info-box"><div class="title">📋 安全策略批量分发</div><div class="desc">15家门店 · 温度/电流阈值已同步 · 更新 09:15</div></div>
+          <div class="info-box"><div class="title">🤖 AI主动调参</div><div class="desc">今日23次 · 预估节电127 kWh · 基于人流/天气</div></div>
+          <div class="info-box"><div class="title">🛠️ 远程深度运维</div><div class="desc">本月8次 · 节省差旅32h · 减排~160kg CO₂</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><span class="card-title">📐 数据验证</span><span class="card-badge online">● 三重验证</span></div>
+      <div class="card-body">
+        <div class="badge-row">
+          <span class="badge-item">📡 IoT智慧电表 · 逐日能耗（置地/IFC）</span>
+          <span class="badge-item">📊 AI Monte Carlo · 资产寿命推算</span>
+          <span class="badge-item">📑 Gucci/Dior账单核实 · IATA碳排标准</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PAGE 2: 能源监控 ============ -->
+  <div class="page" id="page-1">
+    <div class="section-title">⚡ 能源监控</div>
+
+    <div class="kpi-row">
+      <div class="kpi-card"><div class="num">38.2 kW</div><div class="label">当前功率</div></div>
+      <div class="kpi-card"><div class="num">247 kWh</div><div class="label">今日用电</div><div class="sub">▼ 12.4%</div></div>
+      <div class="kpi-card"><div class="num">6,842 kWh</div><div class="label">本月累计</div><div class="sub">▼ 18.6% vs 接入前</div></div>
+      <div class="kpi-card"><div class="num">0.92</div><div class="label">功率因数</div></div>
+    </div>
+
+    <div class="alert-bar">
+      <div class="time">🔔 10:23 · 系统主动告警</div>
+      <div class="msg">AHU-01 电流异常（12.1A→15.8A），判定为滤网堵塞</div>
+      <div class="action">已自动生成工单 #WO-2410 · 通知维护团队</div>
+    </div>
+
+    <div class="col2">
+      <div class="card">
+        <div class="card-header"><span class="card-title">📉 AI节能前后对比</span><span class="card-badge online">● 持续优化</span></div>
+        <div class="card-body">
+          <div class="chart-row"><span class="label">接入后 (SSR)</span><div class="bar-wrap"><div class="bar-fill" style="width:62%;background:linear-gradient(90deg,#6A9B6A,#8FBC8F);"></div></div><span class="bar-val">247 kWh</span></div>
+          <div class="chart-row"><span class="label">接入前</span><div class="bar-wrap"><div class="bar-fill" style="width:76%;background:linear-gradient(90deg,#D35400,#E87A4A);"></div></div><span class="bar-val">304 kWh</span></div>
+          <div style="margin-top:8px;font-size:11px;color:#6A9B6A;">日均节电57kWh · 全年预20,805kWh · 碳排减~11.4吨/年</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">🔍 故障溯源 · 电力指纹</span><span class="card-badge warn">● 独家</span></div>
+        <div class="card-body">
+          <div class="info-box"><div class="title">⚡ 故障前300秒波形锁定</div><div class="desc">自动捕获故障前300s电流波形，区分电网瞬变与机械疲劳</div></div>
+          <div class="badge-row">
+            <span class="badge-item">📈 本周捕获 4次</span>
+            <span class="badge-item">✅ 电网瞬变 3 / 机械疲劳 1</span>
+            <span class="badge-item">🔧 提前干预 2次</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><span class="card-title">🔌 分路电力</span><span class="card-badge online">● 实时</span></div>
+      <div class="card-body">
+        <div class="col2">
+          <div>
+            <div class="chart-row"><span class="label">L1 · 照明</span><div class="bar-wrap"><div class="bar-fill" style="width:45%;background:#D8AC55;"></div></div><span class="bar-val">12.1A / 220V</span></div>
+            <div class="chart-row"><span class="label">L2 · 插座</span><div class="bar-wrap"><div class="bar-fill" style="width:38%;background:#D8AC55;"></div></div><span class="bar-val">10.3A / 220V</span></div>
+            <div class="chart-row"><span class="label">L3 · HVAC</span><div class="bar-wrap"><div class="bar-fill" style="width:52%;background:#D8AC55;"></div></div><span class="bar-val">14.2A / 220V</span></div>
+          </div>
+          <div>
+            <div class="chart-row"><span class="label">L4 · LED屏</span><div class="bar-wrap"><div class="bar-fill" style="width:28%;background:#D8AC55;"></div></div><span class="bar-val">7.6A / 220V</span></div>
+            <div class="chart-row"><span class="label">L5 · 冷藏</span><div class="bar-wrap"><div class="bar-fill" style="width:18%;background:#D8AC55;"></div></div><span class="bar-val">4.8A / 220V</span></div>
+            <div class="chart-row"><span class="label">L6 · 备用</span><div class="bar-wrap"><div class="bar-fill" style="width:5%;background:#D4CFC8;"></div></div><span class="bar-val">0.0A</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PAGE 3: HVAC · 数字资产 ============ -->
+  <div class="page" id="page-2">
+    <div class="section-title">❄️ HVAC智控 · 数字资产库</div>
+
+    <div class="col2">
+      <div class="card">
+        <div class="card-header"><span class="card-title">🌡️ HVAC 设备状态</span><span class="card-badge online">● AI主动调控</span></div>
+        <div class="card-body">
+          <div style="display:flex;gap:16px;margin-bottom:10px;flex-wrap:wrap;">
+            <span style="font-size:12px;color:#8A8595;">模式：<strong style="color:#2B2832;">AI节能</strong></span>
+            <span style="font-size:12px;color:#8A8595;">目标：<strong style="color:#2B2832;">24.0°C</strong></span>
+            <span style="font-size:12px;color:#8A8595;">实际：<strong style="color:#2B2832;">23.8°C</strong></span>
+            <span style="font-size:12px;color:#8A8595;">湿度：<strong style="color:#2B2832;">55%</strong></span>
+          </div>
+          <div class="eq-list">
+            <div class="eq-item"><span class="eq-name">AHU-01 (主厅)</span><span class="eq-status running">● 运行</span><span class="eq-mode">出12°C · 回22°C</span><span class="eq-temp">24.0</span></div>
+            <div class="eq-item"><span class="eq-name">AHU-02 (VIP室)</span><span class="eq-status running">● 运行</span><span class="eq-mode">出11°C · 回21°C</span><span class="eq-temp">23.0</span></div>
+            <div class="eq-item"><span class="eq-name">FCU-01 (入口)</span><span class="eq-status standby">○ 待机</span><span class="eq-mode">—</span><span class="eq-temp">—</span></div>
+            <div class="eq-item"><span class="eq-name">FCU-02 (仓库)</span><span class="eq-status running">● 运行</span><span class="eq-mode">出14°C · 回24°C</span><span class="eq-temp">26.0</span></div>
+          </div>
+          <div class="ai-log">
+            <div class="title">🤖 AI自动调节 · 今日</div>
+            <div class="text">09:23 · 人流↑ → AHU-01 风速低→中<br>11:45 · 室外32°C → 目标温度↓0.5°C<br>14:00 · 闭店预判 → FCU-02 待机</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">📇 数字资产库 · QR身份证</span><span class="card-badge online">● 15台已建档</span></div>
+        <div class="card-body">
+          <div class="info-box"><div class="title">🏷️ 每台设备唯一QR Code</div><div class="desc">扫码调取完整档案 · 型号/安装日期/维修历史/SOP</div></div>
+          <div style="background:#F8F6F4;border-radius:4px;padding:10px;margin-bottom:10px;">
+            <div style="font-size:12px;color:#2B2832;font-weight:600;margin-bottom:4px;">📱 AHU-01 档案</div>
+            <div style="font-size:11px;color:#6A6577;line-height:1.6;">Trane YSC060 · 安装2022-03 · 上次维护2025-05<br>历史工单12单 · 平均响应2.4h · SOP: MEP-003</div>
+          </div>
+          <div class="badge-row">
+            <span class="badge-item">🏢 覆盖 15家门店</span>
+            <span class="badge-item">🔢 设备 127台</span>
+            <span class="badge-item">📊 本月扫码 23次</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><span class="card-title">🌬️ 室内空气质量 IAQ</span><span class="card-badge online">● 优良</span></div>
+      <div class="card-body">
+        <div class="iaq-row">
+          <div class="iaq-chip good"><div class="val">423</div><div class="vlabel">CO₂ ppm</div></div>
+          <div class="iaq-chip good"><div class="val">32</div><div class="vlabel">PM2.5 μg/m³</div></div>
+          <div class="iaq-chip good"><div class="val">68</div><div class="vlabel">VOC ppb</div></div>
+          <div class="iaq-chip good"><div class="val">22.5°C</div><div class="vlabel">温度</div></div>
+          <div class="iaq-chip good"><div class="val">55%</div><div class="vlabel">湿度</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PAGE 4: 3D数字孪生 ============ -->
+  <div class="page" id="page-3">
+    <div class="section-title">🏗️ 3D数字孪生</div>
+
+    <div class="placeholder3d">
+      <div class="icon">🏬</div>
+      <div><strong>广州K11 · 3D实景扫描</strong><br>Matterport截图/链接替换此区域</div>
+      <div style="font-size:11px;color:#B3A7B8;">📐 远程测量 · 🏷️ 设备标签 · 🔍 沉浸式巡检</div>
+    </div>
+
+    <div class="col2" style="margin-top:14px;">
+      <div class="card">
+        <div class="card-header"><span class="card-title">📐 远程测量</span></div>
+        <div class="card-body">
+          <div style="font-size:12px;color:#6A6577;line-height:1.6;">3D空间任意两点标注 → 精确尺寸<br>设备安装复核 · 空间改造评估 · 管线确认<br><span style="color:#D8AC55;font-weight:600;">精度 ±5mm · 云端多人协作</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">🌍 碳减排成效</span></div>
+        <div class="card-body">
+          <div class="kpi-row" style="grid-template-columns:repeat(3,1fr);margin-bottom:0;">
+            <div class="kpi-badge"><div class="num">80%</div><div class="label">巡检差旅↓</div></div>
+            <div class="kpi-badge"><div class="num">~32h</div><div class="label">月省差旅时</div></div>
+            <div class="kpi-badge"><div class="num gold">IATA</div><div class="label">碳排标准</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PAGE 5: 工单闭环 ============ -->
+  <div class="page" id="page-4">
+    <div class="section-title">📋 工单闭环</div>
+
+    <div class="flow-row">
+      <div class="flow-step"><div class="num">①</div><div class="label">📸 拍照报修</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><div class="num">②</div><div class="label">🤖 AI分级</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><div class="num">③</div><div class="label">📤 自动派单</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><div class="num">④</div><div class="label">✅ AI验收</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><div class="num">⑤</div><div class="label">📊 供应商评分</div></div>
+    </div>
+
+    <div class="col2">
+      <div class="card">
+        <div class="card-header"><span class="card-title">📸 拍照报修 · CV识别</span><span class="card-badge online">● AI视觉</span></div>
+        <div class="card-body">
+          <div class="cv-upload">
+            <div class="icon">📱</div>
+            <div class="text">店员上传现场照片</div>
+            <div class="result">
+              <div class="label">✅ CV识别完成</div>
+              <div class="detail">设备：AHU-01 · 故障：冷凝水盘溢水 · 置信94.2%</div>
+            </div>
+          </div>
+          <div style="font-size:11px;color:#8A8595;">一线员工无需填型号/故障描述 → 拍照即搞定</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">🚨 AI语义分级</span><span class="card-badge online">● 自动</span></div>
+        <div class="card-body">
+          <div class="info-box"><div class="title">📝 自然语言分析</div><div class="desc">识别"漏水""停电""冒烟" → 自动标紧急推送到团队</div></div>
+          <div class="badge-row">
+            <span class="badge-item" style="background:#D3540015;color:#D35400;border-color:#D3540033;">🔴 紧急 1 单</span>
+            <span class="badge-item" style="background:#B8860B15;color:#B8860B;border-color:#B8860B33;">🟡 常规 3 单</span>
+            <span class="badge-item" style="background:#2B283215;color:#2B2832;border-color:#2B283233;">🔵 预防性 2 单</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><span class="card-title">📋 工单列表</span><span class="card-badge warn">● 本月 12 单</span></div>
+      <div class="card-body">
+        <div style="display:flex;gap:12px;margin-bottom:10px;">
+          <span style="font-size:12px;background:#F8F6F4;padding:4px 12px;border-radius:3px;color:#6A9B6A;">✅ 已完成 8</span>
+          <span style="font-size:12px;background:#F8F6F4;padding:4px 12px;border-radius:3px;color:#2B2832;">🔄 进行中 2</span>
+          <span style="font-size:12px;background:#F8F6F4;padding:4px 12px;border-radius:3px;color:#B8860B;">⏳ 待处理 2</span>
+        </div>
+        <div>
+          <div class="wo-item"><span class="wo-id">#WO-2410</span><span class="wo-title">AHU-01 滤网异常 · CV识别<span class="tag urgent">紧急</span></span><span class="wo-label pending">待处理</span><span class="wo-date">06/09</span></div>
+          <div class="wo-item"><span class="wo-id">#WO-2408</span><span class="wo-title">月度预防性维护 · HVAC</span><span class="wo-label pending">待处理</span><span class="wo-date">06/10</span></div>
+          <div class="wo-item"><span class="wo-id">#WO-2407</span><span class="wo-title">LED屏幕显示异常 · 入口</span><span class="wo-label progress">进行中</span><span class="wo-date">06/07</span></div>
+          <div class="wo-item"><span class="wo-id">#WO-2406</span><span class="wo-title">空调出风口异常噪音 · 主厅</span><span class="wo-label done">已完成</span><span class="wo-date">06/05</span></div>
+          <div class="wo-item"><span class="wo-id">#WO-2405</span><span class="wo-title">感应门开关异常</span><span class="wo-label done">已完成</span><span class="wo-date">06/03</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col2">
+      <div class="card">
+        <div class="card-header"><span class="card-title">🖼️ AI维修前后比对</span><span class="card-badge online">● AI审核</span></div>
+        <div class="card-body">
+          <div class="photo-compare">
+            <div class="photo-box"><div class="ph-icon">🔧</div><div class="ph-label">维修前</div><div class="ph-result">冷凝水盘溢水</div></div>
+            <div class="photo-box"><div class="ph-icon">✅</div><div class="ph-label">维修后</div><div class="ph-result pass">AI判定：合格 ✓</div></div>
+          </div>
+          <div style="font-size:11px;color:#8A8595;">AI自动比对照片 · 替代人工现场验收</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">📊 AI供应商稽核</span><span class="card-badge online">● 价格基准</span></div>
+        <div class="card-body">
+          <div class="info-box"><div class="title">🏅 供应商KPI · 自动比对市场价</div><div class="desc">拦截超预算报价，确保透明化管理</div></div>
+          <div class="badge-row">
+            <span class="badge-item" style="background:#6A9B6A15;color:#6A9B6A;">ABC维修 · 评分92 · 5单</span>
+            <span class="badge-item" style="background:#B8860B15;color:#B8860B;">XYZ工程 · 评分78 · 3单</span>
+            <span class="badge-item" style="background:#2B283215;color:#2B2832;">本月拦截超额 2笔 · 省HK$4,200</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="policy-bot">
+      <div class="header"><span class="icon">🤖</span><span class="title">Policy Bot · 政策机器人</span></div>
+      <div class="search">🔍 输入问题，例如「空调温度设定标准」、「紧急报修流程」...</div>
+      <div class="qa"><div class="q">Q: 空调温度设定标准是什么？</div><div class="a">高端零售：夏季22-25°C，冬季20-23°C。VIP室湿度45-55%。详见SOP-MEP-002</div></div>
+      <div class="qa"><div class="q">Q: 紧急报修流程</div><div class="a">① CV拍照 → ② AI分级 → ③ 30min确认 → ④ 2h到场。节假日自动升级</div></div>
+    </div>
+  </div>
+
+  <div class="footer">SSR · AI-Driven Ecosystem for Sustainable Facility Management · HKGIA 2025-2026</div>
+
+</div>
+
+<script>
+function updateClock() {
+  const now = new Date();
+  const hk = new Date(now.toLocaleString('en-US', {timeZone:'Asia/Hong_Kong'}));
+  document.getElementById('clock').textContent = hk.toLocaleTimeString('zh-CN', {hour12:false}) + ' HKT';
+}
+setInterval(updateClock, 1000);
+updateClock();
+function switchTab(idx) {
+  document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', i===idx));
+  document.querySelectorAll('.sidebar-item').forEach((b,i) => b.classList.toggle('active', i===idx));
+  document.querySelectorAll('.page').forEach((p,i) => p.classList.toggle('active', i===idx));
+}
+</script>
+
+</body>
+</html>
